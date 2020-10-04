@@ -9,7 +9,7 @@ class App extends Component {
       workMinutes: 25,
       staticWorkSeconds: 0,
       workSeconds: 0,
-      staticBreakkSeconds: 0,
+      staticBreakSeconds: 0,
       breakSeconds: 5,
       staticBreakMinute: 25,
       breakMinutes: 0,
@@ -76,11 +76,19 @@ class App extends Component {
   }
 
   handleReset() {
-    this.setState({
-      workMinutes: this.state.staticWorkMinute,
-      workSeconds: this.state.staticWorkSeconds,
-      countingDown: false
-    })
+    if (this.state.title === "Work Timer") {
+      this.setState({
+        workMinutes: this.state.staticWorkMinute,
+        workSeconds: this.state.staticWorkSeconds,
+        countingDown: false
+      })
+    } else {
+      this.setState({
+        workMinutes: this.state.staticBreakMinute,
+        workSeconds: this.state.staticBreakSeconds,
+        countingDown: false
+      })
+    }
   }
 
   generateTime(time) {
