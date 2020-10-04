@@ -5,13 +5,16 @@ class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      workSeconds: 0,
-      workMinutes: 25,
-      breakSeconds: 0,
-      breakMinutes: 5,
-      countingDown: true,
       staticWorkMinute: 25,
-      staticWorkSeconds: 0
+      workMinutes: 25,
+      staticWorkSeconds: 0,
+      workSeconds: 0,
+      staticBreakkSeconds: 0,
+      breakSeconds: 5,
+      staticBreakMinute: 25,
+      breakMinutes: 0,
+      countingDown: true,
+      title: "Work Timer"
     }
   }
 
@@ -45,8 +48,19 @@ class App extends Component {
     const shouldResetInterval = zeroWorkMins && zeroWorkSecs
 
     if (shouldResetInterval) {
-      this.resetIntervals()
-      return null
+      if (this.state.title === "Break Timer") {
+        this.setState({
+          workMinutes: this.state.staticBreakMinute,
+          workSeconds: this.state.staticBreakkSeconds + 1,
+          title: "Work Timer"
+        })
+      } else {
+        this.setState({
+          workMinutes: this.state.breakMinutes,
+          workSeconds: this.state.breakSeconds + 1,
+          title: "Break Timer"
+        })
+      }
     }
 
     if (this.state.workSeconds === 0) {
@@ -113,17 +127,19 @@ class App extends Component {
 
   render() {
     const {
+      title,
       workMinutes,
       workSeconds,
       breakMinutes,
       countingDown,
       breakSeconds,
+      staticWorkSeconds,
       staticWorkMinute
     } = this.state
 
     return (
       <div className="App">
-        <span>Work timer</span>
+        <span>{title}</span>
         <div>
           {this.generateTime(workMinutes)}
           <span>:</span>
@@ -154,7 +170,7 @@ class App extends Component {
               <span>Secs:</span>
               <input
                 type="text"
-                // value={staticWorkSeconds}
+                value={staticWorkSeconds}
                 onChange={e => this.handleWorkSecondsChange(e)}
               />
             </div>
@@ -165,11 +181,11 @@ class App extends Component {
             </div>
             <div>
               <span>Mins:</span>
-              <input type="text" value={breakMinutes} />
+              <input type="text" />
             </div>
             <div>
               <span>Secs:</span>
-              <input type="text" value={breakSeconds} />
+              <input type="text" />
             </div>
           </div>
         </div>
