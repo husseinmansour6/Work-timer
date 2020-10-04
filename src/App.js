@@ -48,6 +48,7 @@ class App extends Component {
     const shouldResetInterval = zeroWorkMins && zeroWorkSecs
 
     if (shouldResetInterval) {
+      alert("buzzzzzzz")
       if (this.state.title === "Break Timer") {
         this.setState({
           workMinutes: this.state.staticBreakMinute,
@@ -91,6 +92,9 @@ class App extends Component {
   }
 
   handleWorkMinutesChange(e) {
+    if (this.state.title === "Break Timer" || /[a-zA-Z]/.test(e.target.value)) {
+      return null
+    }
     this.setState({
       countingDown: false,
       staticWorkMinute: e.target.value,
@@ -112,6 +116,9 @@ class App extends Component {
   }
 
   handleWorkSecondsChange(e) {
+    if (this.state.title === "Break Timer" || /[a-zA-Z]/.test(e.target.value)) {
+      return null
+    }
     const parsedWorkSecs = parseInt(e.target.value)
     if (!isNaN(parsedWorkSecs) && parsedWorkSecs > 60) {
       this.convertSecsToMins(parsedWorkSecs)
