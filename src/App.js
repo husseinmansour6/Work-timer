@@ -85,7 +85,24 @@ class App extends Component {
     })
   }
 
+  convertSecsToMins(secs) {
+    const numOfMin = secs / 60
+    const minsToAdd = Math.floor(numOfMin)
+    const secsToAdd = secs - minsToAdd * 60
+    this.setState({
+      countingDown: false,
+      staticWorkSeconds: secsToAdd,
+      workSeconds: secsToAdd,
+      workMinutes: this.state.staticWorkMinute + minsToAdd
+    })
+  }
+
   handleWorkSecondsChange(e) {
+    const parsedWorkSecs = parseInt(e.target.value)
+    if (!isNaN(parsedWorkSecs) && parsedWorkSecs > 60) {
+      this.convertSecsToMins(parsedWorkSecs)
+      return null
+    }
     this.setState({
       countingDown: false,
       staticWorkSeconds: e.target.value,
