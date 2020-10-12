@@ -41,29 +41,6 @@ class App extends Component {
   }
 
   decSeconds() {
-    const parsedWorkMins = parseInt(this.state.workMinutes)
-    const parsedWorkSecs = parseInt(this.state.workSeconds)
-    const zeroWorkMins = parsedWorkMins === 0 || isNaN(parsedWorkMins)
-    const zeroWorkSecs = parsedWorkSecs === 0 || isNaN(parsedWorkSecs)
-    const shouldResetInterval = zeroWorkMins && zeroWorkSecs
-
-    if (shouldResetInterval) {
-      alert("buzzzzzzz")
-      if (this.state.title === "Break Timer") {
-        this.setState({
-          workMinutes: this.state.staticBreakMinute,
-          workSeconds: this.state.staticBreakkSeconds + 1,
-          title: "Work Timer"
-        })
-      } else {
-        this.setState({
-          workMinutes: this.state.breakMinutes,
-          workSeconds: this.state.breakSeconds + 1,
-          title: "Break Timer"
-        })
-      }
-    }
-
     if (this.state.workSeconds === 0) {
       this.setState({
         workSeconds: 60,
@@ -73,6 +50,36 @@ class App extends Component {
     this.setState({
       workSeconds: this.state.workSeconds - 1
     })
+
+    const parsedWorkMins = parseInt(this.state.workMinutes)
+    const parsedWorkSecs = parseInt(this.state.workSeconds)
+    const zeroWorkMins = parsedWorkMins === 0 || isNaN(parsedWorkMins)
+    const zeroWorkSecs = parsedWorkSecs === 0 || isNaN(parsedWorkSecs)
+    const shouldResetInterval = zeroWorkMins && zeroWorkSecs
+
+    if (shouldResetInterval) {
+      console.log("resetting")
+      this.setState({
+        countingDown: false
+      })
+      setTimeout(() => {
+        if (this.state.title === "Break Timer") {
+          this.setState({
+            countingDown: true,
+            workMinutes: this.state.staticBreakMinute,
+            workSeconds: this.state.staticBreakkSeconds || 0,
+            title: "Work Timer"
+          })
+        } else {
+          this.setState({
+            countingDown: true,
+            workMinutes: this.state.breakMinutes,
+            workSeconds: this.state.breakSeconds || 0,
+            title: "Break Timer"
+          })
+        }
+      }, 2000)
+    }
   }
 
   handleReset() {
