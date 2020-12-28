@@ -1,103 +1,7 @@
 import React, { Component } from "react"
 import "./App.css"
 
-class App extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      staticWorkMinute: 25,
-      workMinutes: 25,
-      staticWorkSeconds: 0,
-      workSeconds: 0,
-      staticBreakSeconds: 0,
-      breakSeconds: 5,
-      staticBreakMinute: 25,
-      breakMinutes: 0,
-      countingDown: true,
-      title: "Work Timer"
-    }
-  }
-
-  componentDidMount() {
-    this.secondsInterval = setInterval(
-      () => this.state.countingDown && this.decSeconds(),
-      1000
-    )
-  }
-
-  resetIntervals() {
-    clearInterval(this.secondsInterval)
-  }
-
-  togglePlayPause() {
-    if (this.state.workSeconds === "") {
-      this.setState({
-        workSeconds: 60
-      })
-    }
-    this.setState({
-      countingDown: !this.state.countingDown
-    })
-  }
-
-  decSeconds() {
-    if (this.state.workSeconds === 0) {
-      this.setState({
-        workSeconds: 60,
-        workMinutes: this.state.workMinutes - 1
-      })
-    }
-    this.setState({
-      workSeconds: this.state.workSeconds - 1
-    })
-
-    const parsedWorkMins = parseInt(this.state.workMinutes)
-    const parsedWorkSecs = parseInt(this.state.workSeconds)
-    const zeroWorkMins = parsedWorkMins === 0 || isNaN(parsedWorkMins)
-    const zeroWorkSecs = parsedWorkSecs === 0 || isNaN(parsedWorkSecs)
-    const shouldResetInterval = zeroWorkMins && zeroWorkSecs
-
-    if (shouldResetInterval) {
-      console.log("resetting")
-      this.setState({
-        countingDown: false
-      })
-      setTimeout(() => {
-        if (this.state.title === "Break Timer") {
-          this.setState({
-            countingDown: true,
-            workMinutes: this.state.staticBreakMinute,
-            workSeconds: this.state.staticBreakkSeconds || 0,
-            title: "Work Timer"
-          })
-        } else {
-          this.setState({
-            countingDown: true,
-            workMinutes: this.state.breakMinutes,
-            workSeconds: this.state.breakSeconds || 0,
-            title: "Break Timer"
-          })
-        }
-      }, 2000)
-    }
-  }
-
-  handleReset() {
-    if (this.state.title === "Work Timer") {
-      this.setState({
-        workMinutes: this.state.staticWorkMinute,
-        workSeconds: this.state.staticWorkSeconds,
-        countingDown: false
-      })
-    } else {
-      this.setState({
-        workMinutes: this.state.staticBreakMinute,
-        workSeconds: this.state.staticBreakSeconds,
-        countingDown: false
-      })
-    }
-  }
-
+class GenerateTime extends Component {
   generateTime(time) {
     if (time <= 9) {
       return <span>0{time}</span>
@@ -105,71 +9,194 @@ class App extends Component {
       return <span>{time}</span>
     }
   }
+  render() {
+    const { minutes, seconds } = this.props
+    return (
+      <div>
+        {this.generateTime(minutes)}
+        <span>:</span>
+        {this.generateTime(seconds)}
+      </div>
+    )
+  }
+}
 
-  handleWorkMinutesChange(e) {
-    if (this.state.title === "Break Timer" || /[a-zA-Z]/.test(e.target.value)) {
-      return null
+class App extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      minutes: 1,
+      seconds: 58,
+      staticWorkMinutes: 1,
+      staticWorkSeconds: 58,
+      staticBreakSeconds: 0,
+      staticBreakMinutes: 1,
+      title: "Work Timer",
+      started: false,
+      stateChange: false
     }
-    this.setState({
-      countingDown: false,
-      staticWorkMinute: e.target.value,
-      workMinutes: e.target.value,
-      workSeconds: this.state.staticWorkSeconds
-    })
+  }
+
+  componentDidUpdate(prevState, prevProps) {
+    // change back the value of `stateChange`
+    if (this.state.stateChange !== prevProps.stateChange) {
+      return this.setState({ stateChange: false })
+    }
   }
 
   convertSecsToMins(secs) {
     const numOfMin = secs / 60
     const minsToAdd = Math.floor(numOfMin)
     const secsToAdd = secs - minsToAdd * 60
-    this.setState({
-      countingDown: false,
-      staticWorkSeconds: secsToAdd,
-      workSeconds: secsToAdd,
-      workMinutes: this.state.staticWorkMinute + minsToAdd
-    })
+    return { secsToAdd, minsToAdd }
   }
 
-  handleWorkSecondsChange(e) {
-    if (this.state.title === "Break Timer" || /[a-zA-Z]/.test(e.target.value)) {
-      return null
+  handleTimeChange({ changedTime, event, condition, staticChangedTime }) {
+    // prevent updating state when we first load the app or if the value is not a number
+    const updatingCurrentTime = this.state.title
+      .toLowerCase()
+      .includes(condition)
+
+    if (this.state.started && updatingCurrentTime) return
+    let enteredTime = event.target.value.replace(/\D/g, "")
+
+    const parsedChangedTime = parseInt(enteredTime)
+    let convertedTime
+    if (
+      !isNaN(parsedChangedTime) &&
+      parsedChangedTime >= 60 &&
+      changedTime === "seconds"
+    ) {
+      convertedTime = this.convertSecsToMins(parsedChangedTime)
     }
-    const parsedWorkSecs = parseInt(e.target.value)
-    if (!isNaN(parsedWorkSecs) && parsedWorkSecs > 60) {
-      this.convertSecsToMins(parsedWorkSecs)
-      return null
+
+    // update the minutes only on work timer
+    if (updatingCurrentTime) {
+      if (convertedTime) {
+        if (condition === "work") {
+          return this.setState({
+            seconds: convertedTime.secsToAdd,
+            staticWorkMinutes: convertedTime.minsToAdd,
+            staticWorkSeconds: convertedTime.secsToAdd,
+            minutes: convertedTime.minsToAdd,
+            stateChange: true
+          })
+        } else {
+          return this.setState({
+            seconds: convertedTime.secsToAdd,
+            staticBreakMinutes: convertedTime.minsToAdd,
+            staticBreakSeconds: convertedTime.secsToAdd,
+            minutes: convertedTime.minsToAdd,
+            stateChange: true
+          })
+        }
+      } else {
+        return this.setState({
+          [staticChangedTime]: enteredTime,
+          [changedTime]: enteredTime,
+          stateChange: true
+        })
+      }
+    } else {
+      if (convertedTime) {
+        if (condition === "work") {
+          return this.setState({
+            staticWorkMinutes: convertedTime.minsToAdd,
+            staticWorkSeconds: convertedTime.secsToAdd,
+            stateChange: true
+          })
+        } else {
+          return this.setState({
+            staticBreakMinutes: convertedTime.minsToAdd,
+            staticBreakSeconds: convertedTime.secsToAdd,
+            stateChange: true
+          })
+        }
+      } else {
+        return this.setState({
+          [staticChangedTime]: enteredTime,
+          stateChange: true
+        })
+      }
     }
-    this.setState({
-      countingDown: false,
-      staticWorkSeconds: e.target.value,
-      workSeconds: e.target.value,
-      workMinutes: this.state.staticWorkMinute
-    })
+  }
+
+  toggleCounter() {
+    clearInterval(this.secondsInterval)
+    this.setState(prevProps => ({
+      started: !prevProps.started
+    }))
+    if (!this.state.started) {
+      this.secondsInterval = setInterval(this.countDownSec, 1000)
+    } else {
+      clearInterval(this.secondsInterval)
+    }
+  }
+
+  countDownSec = () => {
+    if (this.state.seconds === 1 && this.state.minutes >= 1) {
+      this.setState({
+        minutes: this.state.minutes - 1,
+        seconds: 60
+      })
+    }
+
+    if (this.state.seconds === 0 && parseInt(this.state.minutes) === 0) {
+      if (this.state.title === "Work Timer") {
+        this.setState({
+          minutes: this.state.staticBreakMinutes,
+          seconds: this.state.staticBreakSeconds,
+          title: "Break Timer"
+        })
+      } else {
+        this.setState({
+          minutes: this.state.staticWorkMinutes,
+          seconds: this.state.staticWorkSeconds,
+          title: "Work Timer"
+        })
+      }
+    } else {
+      this.setState(prevProps => ({
+        seconds: prevProps.seconds - 1
+      }))
+    }
+  }
+
+  handleReset() {
+    clearInterval(this.secondsInterval)
+    if (this.state.title === "Work Timer") {
+      return this.setState({
+        minutes: this.state.staticWorkMinutes,
+        seconds: this.state.staticWorkSeconds,
+        started: false
+      })
+    } else {
+      return this.setState({
+        minutes: this.state.staticBreakMinutes,
+        seconds: this.state.staticBreakSeconds,
+        started: false
+      })
+    }
   }
 
   render() {
     const {
       title,
-      workMinutes,
-      workSeconds,
-      breakMinutes,
-      countingDown,
-      breakSeconds,
+      minutes,
+      seconds,
+      started,
       staticWorkSeconds,
-      staticWorkMinute
+      staticWorkMinutes,
+      staticBreakMinutes,
+      staticBreakSeconds
     } = this.state
-
     return (
       <div className="App">
         <span>{title}</span>
+        <GenerateTime minutes={minutes} seconds={seconds} />
         <div>
-          {this.generateTime(workMinutes)}
-          <span>:</span>
-          {this.generateTime(workSeconds)}
-        </div>
-        <div>
-          <button title="countingDown" onClick={() => this.togglePlayPause()}>
-            {countingDown ? "Pause" : "Start"}
+          <button title="countingDown" onClick={() => this.toggleCounter()}>
+            {started ? "Pause" : "Start"}
           </button>
           <button title="reset" onClick={() => this.handleReset()}>
             reset
@@ -184,8 +211,15 @@ class App extends Component {
               <span>Mins:</span>
               <input
                 type="text"
-                value={staticWorkMinute}
-                onChange={e => this.handleWorkMinutesChange(e)}
+                value={staticWorkMinutes}
+                onChange={e =>
+                  this.handleTimeChange({
+                    event: e,
+                    changedTime: "minutes",
+                    staticChangedTime: "staticWorkMinutes",
+                    condition: "work"
+                  })
+                }
               />
             </div>
             <div>
@@ -193,7 +227,14 @@ class App extends Component {
               <input
                 type="text"
                 value={staticWorkSeconds}
-                onChange={e => this.handleWorkSecondsChange(e)}
+                onChange={e =>
+                  this.handleTimeChange({
+                    event: e,
+                    changedTime: "seconds",
+                    staticChangedTime: "staticWorkSeconds",
+                    condition: "work"
+                  })
+                }
               />
             </div>
           </div>
@@ -203,11 +244,33 @@ class App extends Component {
             </div>
             <div>
               <span>Mins:</span>
-              <input type="text" />
+              <input
+                type="text"
+                value={staticBreakMinutes}
+                onChange={e =>
+                  this.handleTimeChange({
+                    event: e,
+                    changedTime: "minutes",
+                    staticChangedTime: "staticBreakMinutes",
+                    condition: "break"
+                  })
+                }
+              />
             </div>
             <div>
               <span>Secs:</span>
-              <input type="text" />
+              <input
+                type="text"
+                value={staticBreakSeconds}
+                onChange={e =>
+                  this.handleTimeChange({
+                    event: e,
+                    changedTime: "seconds",
+                    staticChangedTime: "staticBreakSeconds",
+                    condition: "break"
+                  })
+                }
+              />
             </div>
           </div>
         </div>
