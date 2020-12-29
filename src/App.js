@@ -51,15 +51,36 @@ class App extends Component {
     return { secsToAdd, minsToAdd }
   }
 
+  cleanValue(value) {
+    const shouldRemoveZero =
+      value && value.indexOf("0") === 0 && value.split("").length > 1
+    const cleanValue = shouldRemoveZero
+      ? value
+          .split("")
+          .slice(1)
+          .join()
+      : value
+
+    return cleanValue
+  }
+
   handleTimeChange({ changedTime, event, condition, staticChangedTime }) {
     // prevent updating state when we first load the app or if the value is not a number
+    const value = event.target.value
     const updatingCurrentTime = this.state.title
       .toLowerCase()
       .includes(condition)
 
-    if (this.state.started && updatingCurrentTime) return
-    let enteredTime = event.target.value.replace(/\D/g, "")
+    const zerosInTheEnteredTime =
+      value && value.split("").filter(x => x === "0")
+    if (
+      (this.state.started && updatingCurrentTime) ||
+      zerosInTheEnteredTime.length > 1
+    )
+      return null
 
+    const cleanedValue = this.cleanValue(value)
+    let enteredTime = cleanedValue && cleanedValue.replace(/\D/g, "")
     const parsedChangedTime = parseInt(enteredTime)
     let convertedTime
     if (
@@ -70,8 +91,8 @@ class App extends Component {
       convertedTime = this.convertSecsToMins(parsedChangedTime)
     }
 
-    // update the minutes only on work timer
     if (updatingCurrentTime) {
+      // update the minutes only on work timer
       if (convertedTime) {
         if (condition === "work") {
           return this.setState({
@@ -123,6 +144,7 @@ class App extends Component {
 
   toggleCounter() {
     clearInterval(this.secondsInterval)
+    if (!this.state.minutes && !this.state.seconds) return
     this.setState(prevProps => ({
       started: !prevProps.started
     }))
@@ -134,7 +156,7 @@ class App extends Component {
   }
 
   countDownSec = () => {
-    if (this.state.seconds === 1 && this.state.minutes >= 1) {
+    if (this.state.seconds <= 1 && this.state.minutes >= 1) {
       this.setState({
         minutes: this.state.minutes - 1,
         seconds: 60
@@ -190,6 +212,7 @@ class App extends Component {
       staticBreakMinutes,
       staticBreakSeconds
     } = this.state
+
     return (
       <div className="App">
         <span>{title}</span>
