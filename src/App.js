@@ -1,22 +1,29 @@
 import React, { Component } from "react"
-import "./App.css"
+import {
+  Text,
+  View,
+  Vibration,
+  TextInput,
+  StyleSheet,
+  Button
+} from "react-native"
 
 class GenerateTime extends Component {
   generateTime(time) {
     if (time <= 9) {
-      return <span>0{time}</span>
+      return <Text>0{time}</Text>
     } else {
-      return <span>{time}</span>
+      return <Text>{time}</Text>
     }
   }
   render() {
     const { minutes, seconds } = this.props
     return (
-      <div>
-        {this.generateTime(minutes)}
-        <span>:</span>
-        {this.generateTime(seconds)}
-      </div>
+      <View style={styles.flexStyle}>
+        <Text style={{ fontSize: 50 }}>{this.generateTime(minutes)}</Text>
+        <Text style={{ fontSize: 50 }}>:</Text>
+        <Text style={{ fontSize: 50 }}>{this.generateTime(seconds)}</Text>
+      </View>
     )
   }
 }
@@ -25,12 +32,12 @@ class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      minutes: 1,
-      seconds: 58,
-      staticWorkMinutes: 1,
-      staticWorkSeconds: 58,
-      staticBreakSeconds: 0,
-      staticBreakMinutes: 1,
+      minutes: 0,
+      seconds: 5,
+      staticWorkMinutes: 0,
+      staticWorkSeconds: 5,
+      staticBreakSeconds: 5,
+      staticBreakMinutes: 0,
       title: "Work Timer",
       started: false,
       stateChange: false
@@ -50,6 +57,7 @@ class App extends Component {
     const secsToAdd = secs - minsToAdd * 60
     return { secsToAdd, minsToAdd }
   }
+  vibrateDevice = () => Vibration.vibrate()
 
   cleanValue(value) {
     const shouldRemoveZero =
@@ -162,8 +170,7 @@ class App extends Component {
         seconds: 60
       })
     }
-
-    if (this.state.seconds === 0 && parseInt(this.state.minutes) === 0) {
+    if (!this.state.seconds && !this.state.minutes) {
       if (this.state.title === "Work Timer") {
         this.setState({
           minutes: this.state.staticBreakMinutes,
@@ -181,6 +188,9 @@ class App extends Component {
       this.setState(prevProps => ({
         seconds: prevProps.seconds - 1
       }))
+      if (!this.state.minutes && !this.state.seconds) {
+        this.vibrateDevice()
+      }
     }
   }
 
@@ -214,92 +224,153 @@ class App extends Component {
     } = this.state
 
     return (
-      <div className="App">
-        <span>{title}</span>
-        <GenerateTime minutes={minutes} seconds={seconds} />
-        <div>
-          <button title="countingDown" onClick={() => this.toggleCounter()}>
-            {started ? "Pause" : "Start"}
-          </button>
-          <button title="reset" onClick={() => this.handleReset()}>
-            reset
-          </button>
-        </div>
-        <div>
-          <div>
-            <div>
-              <span>Work time:</span>
-            </div>
-            <div>
-              <span>Mins:</span>
-              <input
-                type="text"
-                value={staticWorkMinutes}
-                onChange={e =>
-                  this.handleTimeChange({
-                    event: e,
-                    changedTime: "minutes",
-                    staticChangedTime: "staticWorkMinutes",
-                    condition: "work"
-                  })
-                }
-              />
-            </div>
-            <div>
-              <span>Secs:</span>
-              <input
-                type="text"
-                value={staticWorkSeconds}
-                onChange={e =>
-                  this.handleTimeChange({
-                    event: e,
-                    changedTime: "seconds",
-                    staticChangedTime: "staticWorkSeconds",
-                    condition: "work"
-                  })
-                }
-              />
-            </div>
-          </div>
-          <div>
-            <div>
-              <span>Break time:</span>
-            </div>
-            <div>
-              <span>Mins:</span>
-              <input
-                type="text"
-                value={staticBreakMinutes}
-                onChange={e =>
-                  this.handleTimeChange({
-                    event: e,
-                    changedTime: "minutes",
-                    staticChangedTime: "staticBreakMinutes",
-                    condition: "break"
-                  })
-                }
-              />
-            </div>
-            <div>
-              <span>Secs:</span>
-              <input
-                type="text"
-                value={staticBreakSeconds}
-                onChange={e =>
-                  this.handleTimeChange({
-                    event: e,
-                    changedTime: "seconds",
-                    staticChangedTime: "staticBreakSeconds",
-                    condition: "break"
-                  })
-                }
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <View style={styles.appContainer}>
+        <Text style={{ fontSize: 60, fontWeight: 700 }}>{title}</Text>
+        <GenerateTime
+          style={{ display: "flex", flexDirection: "row" }}
+          minutes={minutes}
+          seconds={seconds}
+        />
+        <View
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            padding: "10px",
+            width: "50%",
+            justifyContent: "space-between"
+          }}
+        >
+          <Button
+            style={{}}
+            title={started ? "Pause" : "Start"}
+            onPress={() => this.toggleCounter()}
+          />
+          <Button title="reset" onPress={() => this.handleReset()} />
+        </View>
+        <View>
+          <View
+            style={{
+              padding: "10px"
+            }}
+          >
+            <View>
+              <Text style={{ fontSize: 40 }}>Work time:</Text>
+            </View>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between"
+              }}
+            >
+              <View style={styles.flexStyle}>
+                <Text style={{ fontSize: 20 }}>Mins:</Text>
+                <TextInput
+                  style={{ border: "1px solid blue", width: 30, fontSize: 20 }}
+                  value={staticWorkMinutes}
+                  onChange={e =>
+                    this.handleTimeChange({
+                      event: e,
+                      changedTime: "minutes",
+                      staticChangedTime: "staticWorkMinutes",
+                      condition: "work"
+                    })
+                  }
+                />
+              </View>
+              <View style={styles.flexStyle}>
+                <Text style={{ fontSize: 20 }}>Secs:</Text>
+                <TextInput
+                  style={styles.input}
+                  value={staticWorkSeconds}
+                  onChange={e =>
+                    this.handleTimeChange({
+                      event: e,
+                      changedTime: "seconds",
+                      staticChangedTime: "staticWorkSeconds",
+                      condition: "work"
+                    })
+                  }
+                />
+              </View>
+            </View>
+          </View>
+          <View
+            style={{
+              padding: "10px"
+            }}
+          >
+            <View>
+              <Text style={{ fontSize: 40 }}>Break time:</Text>
+            </View>
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between"
+              }}
+            >
+              <View style={styles.flexStyle}>
+                <Text style={{ fontSize: 20 }}>Mins:</Text>
+                <TextInput
+                  style={styles.input}
+                  value={staticBreakMinutes}
+                  onChange={e =>
+                    this.handleTimeChange({
+                      event: e,
+                      changedTime: "minutes",
+                      staticChangedTime: "staticBreakMinutes",
+                      condition: "break"
+                    })
+                  }
+                />
+              </View>
+              <View style={styles.flexStyle}>
+                <Text style={{ fontSize: 20 }}>Secs:</Text>
+                <TextInput
+                  style={styles.input}
+                  value={staticBreakSeconds}
+                  onChange={e =>
+                    this.handleTimeChange({
+                      event: e,
+                      changedTime: "seconds",
+                      staticChangedTime: "staticBreakSeconds",
+                      condition: "break"
+                    })
+                  }
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
     )
   }
 }
 
+const styles = StyleSheet.create({
+  appContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100%",
+    marginTop: "20%"
+  },
+  flexStyle: {
+    display: "flex",
+    flexDirection: "row",
+    paddingTop: "10px"
+  },
+  input: {
+    border: "1px solid blue",
+    width: 30,
+    fontSize: 20
+  },
+  button: {
+    paddingRight: "5px"
+  },
+  paddingStyle: {
+    paddingTop: "10px"
+  }
+})
 export default App
